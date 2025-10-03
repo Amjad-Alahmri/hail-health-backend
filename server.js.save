@@ -1,0 +1,61 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { createClient } = require('@supabase/supabase-js');
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Supabase Client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
+// Test Route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Backend جاهز - تجمع حائل الصحي',
+    status: 'running'
+  });
+});
+
+// Test Supabase Connection
+app.get('/test-db', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('uploaded_files')
+      .select('*')
+      .limit(1);
+    
+    if (error) throw error;
+    
+    res.json({ 
+      success: true, 
+      message: 'اتصال Supabase شغال',
+      data 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'خطأ في الاتصال',
+      error: error.message 
+    });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+});
+
+
+
+
+
+
+
+

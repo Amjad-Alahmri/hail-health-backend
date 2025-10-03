@@ -1,0 +1,36 @@
+const jwt = require('jsonwebtoken');
+
+// التحقق من Token
+exports.authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'غير مصرح - يتطلب تسجيل الدخول' 
+    });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Token غير صالح أو منتهي' 
+      });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// التحقق من صلاحية Admin
+exports.isAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      success: false, 
+      message: 'غير مصرح - صلاحيات Admin مطلوبة' 
+    });
+  }
+  next();
+}; 
