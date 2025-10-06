@@ -7,15 +7,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// تسجيل مستخدم جديد
 exports.register = async (req, res) => {
   try {
     const { email, password, role = 'user' } = req.body;
-
+    
     if (!email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'البريد وكلمة المرور مطلوبة' 
+      return res.status(400).json({
+        success: false,
+        message: 'البريد وكلمة المرور مطلوبة'
       });
     }
 
@@ -26,9 +25,9 @@ exports.register = async (req, res) => {
       .single();
 
     if (existingUser) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'البريد الإلكتروني مستخدم مسبقاً' 
+      return res.status(400).json({
+        success: false,
+        message: 'البريد الإلكتروني مستخدم مسبقاً'
       });
     }
 
@@ -47,25 +46,23 @@ exports.register = async (req, res) => {
       message: 'تم التسجيل بنجاح',
       user: { id: data.id, email: data.email, role: data.role }
     });
-
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'خطأ في التسجيل',
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-// تسجيل الدخول
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    
     if (!email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'البريد وكلمة المرور مطلوبة' 
+      return res.status(400).json({
+        success: false,
+        message: 'البريد وكلمة المرور مطلوبة'
       });
     }
 
@@ -76,18 +73,18 @@ exports.login = async (req, res) => {
       .single();
 
     if (error || !user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'البريد أو كلمة المرور غير صحيحة' 
+      return res.status(401).json({
+        success: false,
+        message: 'البريد أو كلمة المرور غير صحيحة'
       });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
 
     if (!isValidPassword) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'البريد أو كلمة المرور غير صحيحة' 
+      return res.status(401).json({
+        success: false,
+        message: 'البريد أو كلمة المرور غير صحيحة'
       });
     }
 
@@ -103,12 +100,36 @@ exports.login = async (req, res) => {
       token,
       user: { id: user.id, email: user.email, role: user.role }
     });
-
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'خطأ في تسجيل الدخول',
-      error: error.message 
+      error: error.message
+    });
+  }
+};
+
+exports.loginAnonymous = async (req, res) => {
+  try {
+    const anonymousId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const token = jwt.sign(
+      { id: anonymousId, email: 'anonymous', role: 'user' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'تم الدخول كمستخدم',
+      token,
+      user: { id: anonymousId, email: 'anonymous', role: 'user' }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في الدخول',
+      error: error.message
     });
   }
 };

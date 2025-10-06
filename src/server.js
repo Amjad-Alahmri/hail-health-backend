@@ -5,8 +5,13 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Middleware - CORS مع خيارات كاملة
+app.use(cors({
+  origin: '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Supabase Client
@@ -24,7 +29,7 @@ app.use('/api/files', filesRoutes);
 
 // Test Route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Backend جاهز - تجمع حائل الصحي',
     status: 'running',
     endpoints: {
@@ -41,8 +46,7 @@ app.get('/', (req, res) => {
       }
     }
   });
-}); 
-
+});
 
 // Test Supabase Connection
 app.get('/test-db', async (req, res) => {
@@ -51,19 +55,19 @@ app.get('/test-db', async (req, res) => {
       .from('uploaded_files')
       .select('*')
       .limit(1);
-    
+
     if (error) throw error;
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: 'اتصال Supabase شغال',
-      data 
+      data
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'خطأ في الاتصال',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -71,4 +75,4 @@ app.get('/test-db', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
-});
+}); 
