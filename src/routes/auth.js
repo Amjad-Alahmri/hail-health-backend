@@ -11,4 +11,6 @@ router.post('/login', authController.login);
 // جديد - تسجيل دخول مجهول (User)
 router.post('/login/anonymous', authController.loginAnonymous);
 
+router.post('/anonymous', authController.loginAnonymous); 
+
 module.exports = router;
