@@ -5,7 +5,22 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-// Middleware - CORS مع خيارات كاملة
+// ✅ طباعة المتغيرات للتأكد
+console.log('🔍 Checking environment variables...');
+console.log('SUPABASE_URL exists:', !!process.env.SUPABASE_URL);
+console.log('SUPABASE_SERVICE_KEY exists:', !!process.env.SUPABASE_SERVICE_KEY);
+console.log('PORT:', process.env.PORT || 3000);
+
+// ✅ التحقق من المتغيرات
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+  console.error('❌ Missing environment variables!');
+  console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('SUPABASE')));
+  process.exit(1);
+}
+
+console.log('✅ All environment variables loaded');
+
+// Middleware - CORS
 app.use(cors({
   origin: '*',
   credentials: true,
@@ -14,11 +29,13 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Supabase Client
+// ✅ Supabase Client
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
+
+console.log('✅ Supabase client initialized');
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -32,10 +49,14 @@ app.get('/', (req, res) => {
   res.json({
     message: 'Backend جاهز - تجمع حائل الصحي',
     status: 'running',
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || 'development',
+    supabaseConnected: !!supabase,
     endpoints: {
       auth: {
         login: 'POST /api/auth/login',
-        register: 'POST /api/auth/register'
+        register: 'POST /api/auth/register',
+        anonymous: 'POST /api/auth/anonymous'
       },
       files: {
         getAll: 'GET /api/files',
@@ -72,7 +93,21 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+// Health Check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-}); 
+
+// ✅ Listen على 0.0.0.0 للـ Railway
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 CORS enabled for all origins`);
+  console.log(`⏰ Started at: ${new Date().toISOString()}`);
+});
