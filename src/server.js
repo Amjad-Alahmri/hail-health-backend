@@ -2,8 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit'); 
 
 const app = express();
+
 
 // ✅ طباعة المتغيرات للتأكد
 console.log('🔍 Checking environment variables...');
@@ -20,13 +23,30 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
 
 console.log('✅ All environment variables loaded');
 
+// Security Headers
+app.use(helmet()); 
+
+// Rate Limiting - حماية من الهجمات
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { 
+    success: false, 
+    message: 'تم تجاوز عدد الطلبات المسموح، حاول بعد قليل' 
+  }
+});
+
+app.use('/api/', limiter);  // ← جديد  
+
 // Middleware - CORS
+// ✅ CORS للتطوير المحلي
 app.use(cors({
-  origin: '*',
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
 // ✅ Supabase Client
