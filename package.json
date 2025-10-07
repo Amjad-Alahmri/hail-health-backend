@@ -11,6 +11,9 @@
   "keywords": [],
   "author": "Amjad Alahmri",
   "license": "ISC",
+  "engines": {
+  "node": "18.x"
+},
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
