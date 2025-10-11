@@ -21,4 +21,4 @@ router.put('/:id', authenticateToken, isAdmin, filesController.updateFile);
 // حذف ملف (Admin فقط)
 router.delete('/:id', authenticateToken, isAdmin, filesController.deleteFile);
 
-module.exports = router;
+module.exports = router; 

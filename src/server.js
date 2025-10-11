@@ -60,9 +60,13 @@ console.log('✅ Supabase client initialized');
 // Routes
 const authRoutes = require('./routes/auth');
 const filesRoutes = require('./routes/files');
+const statsRoutes = require('./routes/stats');
+const superAdminRoutes = require('./routes/superadmin');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/files', filesRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/superadmin', superAdminRoutes);
 
 // Test Route
 app.get('/', (req, res) => {

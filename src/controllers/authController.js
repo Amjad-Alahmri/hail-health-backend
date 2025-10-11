@@ -133,3 +133,61 @@ exports.loginAnonymous = async (req, res) => {
     });
   }
 };
+
+// إنشاء Super Admin (مؤقت للاختبار)
+exports.createSuperAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'البريد وكلمة المرور مطلوبان'
+      });
+    }
+    
+    // التحقق من عدم وجود البريد
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'البريد الإلكتروني مستخدم مسبقاً'
+      });
+    }
+    
+    // تشفير كلمة المرور
+    const password_hash = await bcrypt.hash(password, 10);
+    
+    // إضافة Super Admin
+    const { data: superAdmin, error } = await supabase
+      .from('users')
+      .insert([{
+        email,
+        password_hash,
+        role: 'super_admin'
+      }])
+      .select('id, email, role, created_at')
+      .single();
+    
+    if (error) throw error;
+    
+    res.status(201).json({
+      success: true,
+      message: 'تم إنشاء Super Admin بنجاح',
+      user: superAdmin
+    });
+    
+  } catch (error) {
+    console.error('❌ خطأ في إنشاء Super Admin:', error);
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في إنشاء Super Admin',
+      error: error.message
+    });
+  }
+};
