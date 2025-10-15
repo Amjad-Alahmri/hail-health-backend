@@ -8,3 +8,4 @@ const supabase = createClient(
 console.log('✅ Supabase client initialized');
 
 module.exports = supabase;
+
