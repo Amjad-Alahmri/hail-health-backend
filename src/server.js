@@ -3,10 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit'); 
-
+const rateLimit = require('express-rate-limit');
 const app = express();
-
 
 // ✅ طباعة المتغيرات للتأكد
 console.log('🔍 Checking environment variables...');
@@ -24,22 +22,20 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
 console.log('✅ All environment variables loaded');
 
 // Security Headers
-app.use(helmet()); 
+app.use(helmet());
 
 // Rate Limiting - حماية من الهجمات
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: { 
-    success: false, 
-    message: 'تم تجاوز عدد الطلبات المسموح، حاول بعد قليل' 
+  message: {
+    success: false,
+    message: 'تم تجاوز عدد الطلبات المسموح، حاول بعد قليل'
   }
 });
-
-app.use('/api/', limiter);  // ← جديد  
+app.use('/api/', limiter);
 
 // Middleware - CORS
-// ✅ CORS للتطوير المحلي
 app.use(cors({
   origin: true,
   credentials: true,
@@ -64,6 +60,15 @@ const statsRoutes = require('./routes/stats');
 const superAdminRoutes = require('./routes/superadmin');
 
 app.use('/api/auth', authRoutes);
+
+// ✅ Middleware للطباعة قبل Files Routes
+app.use('/api/files', (req, res, next) => {
+  console.log('🔵 Request to /api/files:', req.method, req.path);
+  console.log('🔵 Body:', req.body);
+  console.log('🔵 Headers:', req.headers);
+  next();
+});
+
 app.use('/api/files', filesRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/superadmin', superAdminRoutes);
@@ -86,6 +91,7 @@ app.get('/', (req, res) => {
         getAll: 'GET /api/files',
         getByDepartment: 'GET /api/files/department/:department',
         upload: 'POST /api/files (Admin)',
+        uploadYouTube: 'POST /api/files (Admin) - مع youtube_url',
         update: 'PUT /api/files/:id (Admin)',
         delete: 'DELETE /api/files/:id (Admin)'
       }
@@ -119,7 +125,7 @@ app.get('/test-db', async (req, res) => {
 
 // Health Check
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
@@ -128,7 +134,7 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-// ✅ Listen على 0.0.0.0 للـ Railway
+// ✅ Listen على 0.0.0.0
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);

@@ -57,44 +57,76 @@ exports.getFilesByDepartment = async (req, res) => {
   }
 };
 
-// رفع ملف جديد
+// رفع ملف جديد أو فيديو يوتيوب
 exports.uploadFile = async (req, res) => {
   try {
-    const { original_name, custom_name, department, file_url } = req.body;
+    const { original_name, custom_name, department, file_url, youtube_url } = req.body;
 
-    if (!original_name || !custom_name || !department || !file_url) {
+    console.log('📥 Received:', { custom_name, department, file_url, youtube_url });
+
+    // التحقق من الحقول الأساسية
+    if (!custom_name || !department) {
       return res.status(400).json({ 
         success: false, 
-        message: 'جميع الحقول مطلوبة' 
+        message: 'custom_name و department مطلوبة' 
       });
+    }
+
+    // تحديد نوع الملف
+    const isYouTube = youtube_url && youtube_url.trim() !== '';
+    
+    if (!isYouTube && !file_url) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'يرجى إدخال file_url أو youtube_url' 
+      });
+    }
+
+    const fileType = isYouTube ? 'youtube' : 'file';
+    const finalFileUrl = isYouTube ? youtube_url : file_url;
+    const finalOriginalName = isYouTube ? youtube_url : (original_name || 'file');
+
+    console.log('✅ Processing:', { isYouTube, fileType, finalFileUrl });
+
+    // بناء البيانات
+    const insertData = {
+      original_name: finalOriginalName,
+      custom_name: custom_name,
+      department: department,
+      file_url: finalFileUrl,
+      file_type: fileType
+    };
+
+    if (isYouTube) {
+      insertData.youtube_url = youtube_url;
     }
 
     const { data, error } = await supabase
       .from('uploaded_files')
-      .insert([{ 
-        original_name, 
-        custom_name, 
-        department, 
-        file_url 
-      }])
+      .insert([insertData])
       .select()
       .single();
 
     if (error) throw error;
 
     // إضافة نشاط
+    const activityMessage = isYouTube 
+      ? `تم إضافة فيديو: ${custom_name} في قسم ${department}`
+      : `تم رفع ملف: ${custom_name} في قسم ${department}`;
+
     await supabase
       .from('activities')
-      .insert([{ 
-        activity: `تم رفع ملف: ${custom_name} في قسم ${department}` 
-      }]);
+      .insert([{ activity: activityMessage }]);
+
+    console.log('✅ Success:', isYouTube ? 'YouTube video added' : 'File uploaded');
 
     res.status(201).json({ 
       success: true, 
-      message: 'تم رفع الملف بنجاح', 
+      message: isYouTube ? 'تم إضافة الفيديو بنجاح' : 'تم رفع الملف بنجاح',
       file: data 
     });
   } catch (error) {
+    console.error('❌ Upload error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'خطأ في رفع الملف', 
@@ -118,7 +150,6 @@ exports.updateFile = async (req, res) => {
 
     if (error) throw error;
 
-    // إضافة نشاط
     await supabase
       .from('activities')
       .insert([{ 
@@ -144,7 +175,6 @@ exports.deleteFile = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // جلب اسم الملف قبل الحذف
     const { data: file, error: fetchError } = await supabase
       .from('uploaded_files')
       .select('custom_name')
@@ -153,7 +183,6 @@ exports.deleteFile = async (req, res) => {
 
     if (fetchError) throw fetchError;
 
-    // حذف الملف
     const { error } = await supabase
       .from('uploaded_files')
       .delete()
@@ -161,7 +190,6 @@ exports.deleteFile = async (req, res) => {
 
     if (error) throw error;
 
-    // إضافة نشاط
     await supabase
       .from('activities')
       .insert([{ 
@@ -181,7 +209,7 @@ exports.deleteFile = async (req, res) => {
   }
 };
 
-// ✅ جديد - جلب الأنشطة الحديثة
+// جلب الأنشطة الحديثة
 exports.getRecentActivities = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
@@ -206,4 +234,4 @@ exports.getRecentActivities = async (req, res) => {
       error: error.message 
     });
   }
-}; 
+};
