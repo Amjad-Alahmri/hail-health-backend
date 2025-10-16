@@ -3,22 +3,22 @@ const router = express.Router();
 const filesController = require('../controllers/filesController');
 const { authenticateToken, isAdmin } = require('../middleware/auth');
 
-// جلب جميع الملفات (متاح للجميع)
+// جلب جميع الملفات
 router.get('/', filesController.getAllFiles);
 
-// جلب ملفات حسب القسم (متاح للجميع)
+// جلب ملفات حسب القسم
 router.get('/department/:department', filesController.getFilesByDepartment);
 
-// ✅ جديد - جلب الأنشطة الحديثة (متاح للجميع)
+// جلب الأنشطة
 router.get('/activities', filesController.getRecentActivities);
 
 // رفع ملف (Admin فقط)
 router.post('/', authenticateToken, isAdmin, filesController.uploadFile);
 
-// تحديث ملف (Admin فقط)
+// تحديث ملف
 router.put('/:id', authenticateToken, isAdmin, filesController.updateFile);
 
-// حذف ملف (Admin فقط)
+// حذف ملف
 router.delete('/:id', authenticateToken, isAdmin, filesController.deleteFile);
 
-module.exports = router; 
+module.exports = router;
